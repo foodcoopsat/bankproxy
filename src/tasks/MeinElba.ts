@@ -145,7 +145,7 @@ export default class extends TaskBaseCheerio {
       );
       if (paymentIds.length) await this.wait(1000);
       await this.apiPOST(
-        "/bankingzv-neuer-auftrag/neuer-auftrag-ui/rest/erfassteAuftraege",
+        "/bankingzv-neuer-auftrag/neuer-auftrag-ui/rest/erfassteAuftraege?vopStatus=NMTC",
         {
           auftragsart: "SEPA",
           durchfuehrungsart: "EINZELAUFTRAG",
