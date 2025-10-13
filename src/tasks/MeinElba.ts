@@ -163,7 +163,7 @@ export default class extends TaskBaseCheerio {
       paymentIds.push(this.json);
     }
 
-    const query = paymentIds.map((id) => "id=" + id).join("&");
+    const query = paymentIds.map(({auftragId}) => "id=" + auftragId).join("&");
 
     await this.apiPOST(
       "/bankingzv-erfasster-auftrag/erfasster-auftrag-ui/rest/signaturen/sendErfassteAuftraege?" +
