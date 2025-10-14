@@ -141,7 +141,7 @@ export default class extends TaskBaseCheerio {
     const paymentIds = [];
     for (const p of payments) {
       this.spinner(
-        `Create payment for ${p.creditorName} (${p.instructedAmount.amount})`
+        `DEBUGGING: Create payment for ${p.creditorName} (${p.instructedAmount.amount})`
       );
       if (paymentIds.length) await this.wait(1000);
       await this.apiPOST(
