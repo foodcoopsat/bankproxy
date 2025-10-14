@@ -141,9 +141,9 @@ export default class extends TaskBaseCheerio {
     const paymentIds = [];
     for (const p of payments) {
       this.spinner(
-        `DEBUGGING: Create payment for ${p.creditorName} (${p.instructedAmount.amount})`
+        `Create payment for ${p.creditorName} (${p.instructedAmount.amount})`
       );
-      if (paymentIds.length) await this.wait(1000);
+      if (paymentIds.length) await this.wait(3000);
       await this.apiPOST(
         "/bankingzv-neuer-auftrag/neuer-auftrag-ui/rest/erfassteAuftraege?vopStatus=NMTC",
         {
@@ -164,8 +164,8 @@ export default class extends TaskBaseCheerio {
       paymentIds.push(this.json);
       
       // debug:
-      this.spinner(JSON.stringify(this.json, null, 2));
-      this.wait(30000);
+      this.spinner("Result: " + JSON.stringify(this.json, null, 2));
+      await this.wait(3000);
     }
 
     const query = paymentIds.map(({auftragId}) => "id=" + auftragId).join("&");
