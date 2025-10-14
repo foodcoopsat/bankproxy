@@ -158,9 +158,14 @@ export default class extends TaskBaseCheerio {
             currency: p.instructedAmount.currency,
             amount: parseFloat(p.instructedAmount.amount),
           },
+          instantPayment: false,
         }
       );
       paymentIds.push(this.json);
+      
+      // debug:
+      this.spinner(JSON.stringify(this.json, null, 2));
+      this.wait(30000);
     }
 
     const query = paymentIds.map(({auftragId}) => "id=" + auftragId).join("&");
