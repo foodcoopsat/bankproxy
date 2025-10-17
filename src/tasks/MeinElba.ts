@@ -252,6 +252,7 @@ export default class extends TaskBaseCheerio {
       item.zahlungsreferenz,
       item.verwendungszweckZeile1,
       item.verwendungszweckZeile2,
+      item.auftraggeberInformation ?? "", // ELBA: Auftraggeberreferenz
     ]
       .filter((x) => x !== "")
       .join(" ")
