@@ -161,13 +161,13 @@ export default class extends TaskBaseCheerio {
           instantPayment: false,
         }
       );
-      if (this.json.auftragId) paymentIds.push(this.json);
+      if (this.json.auftragId) paymentIds.push(this.json.auftragId);
       
       this.spinner("Result: " + JSON.stringify(this.json, null, 2));
       await this.wait(3000);
     }
 
-    const query = paymentIds.map(({auftragId}) => "id=" + auftragId).join("&");
+    const query = paymentIds.map((id) => "id=" + id).join("&");
 
     await this.apiPOST(
       "/bankingzv-erfasster-auftrag/erfasster-auftrag-ui/rest/signaturen/sendErfassteAuftraege?" +
