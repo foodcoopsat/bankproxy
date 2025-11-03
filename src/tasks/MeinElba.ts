@@ -161,9 +161,8 @@ export default class extends TaskBaseCheerio {
           instantPayment: false,
         }
       );
-      paymentIds.push(this.json);
+      if (this.json.auftragId) paymentIds.push(this.json);
       
-      // debug:
       this.spinner("Result: " + JSON.stringify(this.json, null, 2));
       await this.wait(3000);
     }
