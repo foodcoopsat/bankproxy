@@ -139,11 +139,11 @@ export default class extends TaskBaseCheerio {
     payments: SepaCreditTransferPayment[]
   ) {
     const paymentIds = [];
+    let paymentInfos = [];
+    let totalAmount = 0;
     for (const p of payments) {
-      this.spinner(
-        `Create payment for ${p.creditorName} (${p.instructedAmount.amount})`
-      );
-      if (paymentIds.length) await this.wait(3000);
+      const paymentInfo = `Create payment for ${p.creditorName} (${p.instructedAmount.amount})`;
+      this.spinner(paymentInfo);
       await this.apiPOST(
         "/bankingzv-neuer-auftrag/neuer-auftrag-ui/rest/erfassteAuftraege?vopStatus=NMTC",
         {
@@ -161,13 +161,24 @@ export default class extends TaskBaseCheerio {
           instantPayment: false,
         }
       );
-      if (this.json.auftragId) paymentIds.push(this.json.auftragId);
+      if (this.json.auftragId) {
+        paymentIds.push(this.json.auftragId);
+        paymentInfos.push(paymentInfo);
+        totalAmount += parseFloat(p.instructedAmount.amount);
+      }
       
-      this.spinner("Result: " + JSON.stringify(this.json, null, 2));
+      this.spinner(paymentInfo + "\n\n" + "Result: " + JSON.stringify(this.json, null, 2));
       await this.wait(3000);
     }
 
+    if (paymentIds.length == 0) {
+      this.spinner("No successful payments, aborting payment process.");
+      await this.wait(3000);
+      return;
+    } 
+
     const query = paymentIds.map((id) => "id=" + id).join("&");
+    paymentInfos = paymentInfos.join("\n\n");
 
     await this.apiPOST(
       "/bankingzv-erfasster-auftrag/erfasster-auftrag-ui/rest/signaturen/sendErfassteAuftraege?" +
@@ -187,7 +198,7 @@ export default class extends TaskBaseCheerio {
       `/bankingquer-signatur/signatur-ui/rest/signaturen/${signaturId}/${verfahren}/start`
     );
 
-    this.spinner(`Please sign payments`);
+    this.spinner(`Please sign payments (total ${totalAmount.toFixed(2)}):\n\n` + paymentInfos);
     await this.wait(3000);
     await this.waitUntil(async () => {
       await this.apiPOST(
