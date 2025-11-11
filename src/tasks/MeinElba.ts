@@ -178,7 +178,6 @@ export default class extends TaskBaseCheerio {
     } 
 
     const query = paymentIds.map((id) => "id=" + id).join("&");
-    paymentInfos = paymentInfos.join("\n\n");
 
     await this.apiPOST(
       "/bankingzv-erfasster-auftrag/erfasster-auftrag-ui/rest/signaturen/sendErfassteAuftraege?" +
@@ -198,7 +197,7 @@ export default class extends TaskBaseCheerio {
       `/bankingquer-signatur/signatur-ui/rest/signaturen/${signaturId}/${verfahren}/start`
     );
 
-    this.spinner(`Please sign payments (total ${totalAmount.toFixed(2)}):\n\n` + paymentInfos);
+    this.spinner(`Please sign payments (total ${totalAmount.toFixed(2)}):\n\n` + paymentInfos.join("\n\n"));
     await this.wait(3000);
     await this.waitUntil(async () => {
       await this.apiPOST(
