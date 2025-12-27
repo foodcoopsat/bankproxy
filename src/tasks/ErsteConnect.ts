@@ -118,9 +118,24 @@ export default class extends TaskBaseBerlin {
       this.spinner(
         `Create payment for ${payment.creditorName} (${payment.instructedAmount.amount})`
       );
-      await this.pisPOST("/v1/payments/sepa-credit-transfers", payment);
+      await this.pisPOST("/payments/instant-sepa-credit-transfers", payment);
       paymentIds.push(this.json.paymentId);
     }
+
+    /*
+    TODO:
+    Check transaction status for each payment initiation:
+    As long as RVNC (ReceivedVopCheckNotCompleted): Wait until VOP check has been done
+    If RVCM (ReceivedNeedForVopConfirmation):
+      If VOP status CLOSE_MATCH:
+        show real creditorName to user and ask whether to resume on own risk, abort, or (nice to have) adapt correct name
+        resume by:
+          PUT /v2/pisp/{payment-service}/{payment-product}/{payment-id}/creditor-confirmation
+          undocumentated endpoint -- I suppose it doesn't have any parameters?
+            When RCVC: wait?
+      If VOP status one of NO_MATCH, CREDITOR_BANK_NOT_REGISTERED, NOT_APPLICABLE, ERROR:
+        show status to user and ask whether to resume on own risk or abort
+    */
 
     this.spinner("Creating signing basket...");
     const headers = {
@@ -128,7 +143,7 @@ export default class extends TaskBaseBerlin {
       "TPP-Nok-Redirect-URI": this.callbackUri,
     };
     await this.withRequestHeaders(headers, () =>
-      this.pisPOST("/v1/signing-baskets", { paymentIds })
+      this.pisPOST("/signing-baskets", { paymentIds }) // endpoint not documented in v2 -- check whether still valid
     );
     const statusHref = this.json._links.status.href;
 
@@ -145,13 +160,13 @@ export default class extends TaskBaseBerlin {
   }
 
   override get baseUrl() {
-    return "https://webapi.developers.erstegroup.com/api/egb/production/v1";
+    return "https://webapi.developers.erstegroup.com/api/egb/production";
   }
   override get aisBaseUrl() {
-    return "/aisp";
+    return "/v1/aisp";
   }
   override get pisBaseUrl() {
-    return "/pisp";
+    return "/v2/pisp";
   }
   get walletBaseUrl() {
     return "https://idp.developers.erstegroup.com/developeridp/api";
