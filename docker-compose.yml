@@ -1,0 +1,155 @@
+x-common: &common_foodsoft
+    image: ghcr.io/foodcoopsat/foodsoft@sha256:9609dd872e7a6ef5f15386d86e484a0fa90a9facac6288f331070458b4384a22
+    volumes:
+      - foodsoft:/usr/src/app/storage
+      - ${PWD}/dev_config/foodsoft_config/app_config.yml:/usr/src/app/config/app_config.yml
+      - ${PWD}/dev_config/foodsoft_config/storage.yml.SAMPLE:/usr/src/app/config/storage.yml
+      - ${PWD}/dev_config/foodsoft_config/initializers:/usr/src/app/config/initializers
+      - ${PWD}/dev_config/foodsoft_config/environments/development.rb.SAMPLE:/usr/src/app/config/environments/production.rb
+      - ${PWD}/dev_config/foodsoft_config/navigation.rb:/usr/src/app/config/navigation.rb
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_CLEANER_ALLOW_REMOTE_DATABASE_URL=true
+      - MAILCATCHER_ADDRESS=mailcatcher
+      - MAILCATCHER_PORT=25
+      - SECRET_KEY_BASE=ljwefduspodu
+      - RAILS_ENV=production
+      - FOODSOFT_DB_PREFIX=foodsoft_
+      - FOODSOFT_DB_HOST=mariadb
+      - FOODSOFT_DB_NAME=foodsoft_demo
+      - FOODSOFT_DB_USER=root
+      - FOODSOFT_DB_PASSWORD=secret
+      - RAILS_FORCE_SSL=false
+
+services:
+
+  bankproxy:
+    build:
+      context: .
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.bankproxy.entrypoints: https
+      # traefik.http.routers.foodsoftv2_backend.rule: Host(`app.local.at`) && PathPrefix(`/api`)
+      traefik.http.routers.bankproxy.rule: Host(`app.local.at`) && PathRegexp(`/[^/]+/api/v2/`) || Path(`/api/docs`) || Path(`/api/openapi.json`)
+      traefik.http.routers.bankproxy.tls: "true"
+      traefik.http.services.bankproxy.loadbalancer.server.port: 80
+    environment:
+      - PORT=3000
+      - DATABASE_URL=postgres://root:secret@postgres/bankproxy
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=AqBlimiStVp3_GAvpHDvj5yr
+      - BASE_URL=https://bankproxy.local.at
+      - ADMIN_AUTHORIZE_URL=https://tools.foodcoops.at/oauth2/auth?response_type=id_token&client_id=bankproxy&redirect_uri=https%3A%2F%2Fbankproxy.local.at%2Fadmin&scope=openid&state=bankproxystate&nonce=n0o1n2c3e4
+      - ADMIN_JWT_ALGORITHM=RS256
+      - ADMIN_JWT_SECRET=AdminJwtSecret 
+      - ADMIN_JWT_AUDIENCE=bankproxy
+      # - NODE_ENV=development
+    # volumes:
+    #   - './src:/usr/src/app/src'
+
+  postgres:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=bankproxy
+    volumes:
+      - ./dev_data/postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  init-db:
+    extends: mariadb
+    command: sh -c "mariadb -h mariadb -u root --password=secret -e 'CREATE DATABASE foodsoft_demo;' || true"
+    depends_on:
+      mariadb:
+        condition: service_started
+
+  init-foodsoft-db:
+    <<: *common_foodsoft
+    command: bundle exec rake db:setup
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+
+  foodsoft:
+    <<: *common_foodsoft
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.foodsoft.entrypoints: https
+      traefik.http.routers.foodsoft.rule: Host(`app.local.at`)
+      traefik.http.routers.foodsoft.tls: "true"
+      traefik.http.services.foodsoft.loadbalancer.server.port: 3000
+    depends_on:
+      redis:
+        condition: service_started
+      init-foodsoft-db:
+        condition: service_completed_successfully
+
+  foodsoft_worker:
+    <<: *common_foodsoft
+    command: ./proc-start worker
+    depends_on:
+      redis:
+        condition: service_started
+      init-foodsoft-db:
+        condition: service_completed_successfully
+
+  mailcatcher:
+    image: tophfr/mailcatcher
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.mailcatcher.entrypoints: https
+      traefik.http.routers.mailcatcher.rule: Host(`mailcatcher.local.at`)
+      traefik.http.routers.mailcatcher.tls: "true"
+      traefik.http.services.mailcatcher.loadbalancer.server.port: 80
+
+  mariadb:
+    image: mariadb:10.11
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_DATABASE=development
+    volumes:
+      - mariadb:/var/lib/mysql
+
+  redis:
+    image: redis:6.2-alpine
+
+  traefik:
+    image: traefik:v3.6.7
+    command:
+      - --accesslog.fields.headers.names.Referer=keep
+      - --accesslog.fields.headers.names.User-Agent=keep
+      - --accesslog.filePath=/accesslog/access.log
+      - --accesslog.format=json
+      - --accesslog=true
+      - --configFile=/etc/traefik/traefik.yaml
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.api.entrypoints: https
+      traefik.http.routers.api.rule: Host(`traefik.local.at`)
+      traefik.http.routers.api.service: api@internal
+      traefik.http.routers.api.tls: "true"
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+    volumes:
+      - accesslog:/accesslog
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "./dev_data/certs/:/etc/certs:ro"
+      - "./dev_config/traefik.yaml:/etc/traefik/traefik.yaml:ro"
+      - "./dev_config/traefik.d:/etc/traefik/conf.d:ro"
+
+volumes:
+  bundle:
+  mariadb:
+  foodsoft:
+  accesslog:
+

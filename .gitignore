@@ -6,3 +6,4 @@
 /node_modules
 /result-*
 /tests/cypress/videos
+dev_data/
