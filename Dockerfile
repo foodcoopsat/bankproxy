@@ -1,4 +1,5 @@
-FROM node:25-trixie-slim
+FROM node:18-bullseye-slim
+
 
 ENV NODE_ENV=production
 
