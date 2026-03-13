@@ -7,9 +7,11 @@ x-common: &common_foodsoft
       - ${PWD}/dev_config/foodsoft_config/initializers:/usr/src/app/config/initializers
       - ${PWD}/dev_config/foodsoft_config/environments/development.rb.SAMPLE:/usr/src/app/config/environments/production.rb
       - ${PWD}/dev_config/foodsoft_config/navigation.rb:/usr/src/app/config/navigation.rb
+      - ${PWD}/dev_data/certs/rootCA.pem:/etc/rootCA.pem
     environment:
       - REDIS_URL=redis://redis:6379
       - DATABASE_CLEANER_ALLOW_REMOTE_DATABASE_URL=true
+      - SSL_CERT_FILE=/etc/rootCA.pem
       - MAILCATCHER_ADDRESS=mailcatcher
       - MAILCATCHER_PORT=25
       - SECRET_KEY_BASE=ljwefduspodu
@@ -23,29 +25,73 @@ x-common: &common_foodsoft
 
 services:
 
+  discourse: &discourse
+    image: mortbauer/discourse:2025-06-05v1
+    environment:
+      DISCOURSE_HOSTNAME: forum.local.at
+      DISCOURSE_DB_HOST: postgres
+      DISCOURSE_REDIS_HOST: redis
+      DISCOURSE_SMTP_ADDRESS: mailcatcher
+      DISCOURSE_SMTP_DOMAIN: forum.local.at
+      DISCOURSE_DB_PASSWORD: secret
+      DISCOURSE_DB_USERNAME: root
+    healthcheck:
+      test: "curl -f -H 'Host: forum.local.at' http://localhost:3000/"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.discourse.entrypoints: "https"
+      traefik.http.routers.discourse.rule: "Host(`forum.local.at`)"
+      traefik.http.routers.discourse.tls: "true"
+      traefik.http.services.discourse.loadbalancer.server.port: "3000"
+
+  discourse_sidekiq:
+    <<: *discourse
+    command: bundle exec sidekiq -q critical -q default -q low -v
+    healthcheck: {}
+    labels: {}
+
+  distrust:
+    image: ghcr.io/foodcoopsat/distrust:2026.01.23.1
+    depends_on:
+      - discourse
+    volumes:
+      - ./dev_config/distrust.yml:/etc/distrust/distrust.yml
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.distrust.entrypoints: https
+      traefik.http.routers.distrust.rule: Host(`tools.local.at`) && PathPrefix(`/oauth2`)
+      traefik.http.routers.distrust.tls: "true"
+      traefik.http.services.distrust.loadbalancer.server.port: 3000
+
   bankproxy:
     build:
       context: .
     labels:
       traefik.enable: "true"
       traefik.http.routers.bankproxy.entrypoints: https
-      # traefik.http.routers.foodsoftv2_backend.rule: Host(`app.local.at`) && PathPrefix(`/api`)
-      traefik.http.routers.bankproxy.rule: Host(`app.local.at`) && PathRegexp(`/[^/]+/api/v2/`) || Path(`/api/docs`) || Path(`/api/openapi.json`)
+      traefik.http.routers.bankproxy.rule: Host(`bankproxy.local.at`)
       traefik.http.routers.bankproxy.tls: "true"
-      traefik.http.services.bankproxy.loadbalancer.server.port: 80
+      traefik.http.services.bankproxy.loadbalancer.server.port: 3000
     environment:
-      - PORT=3000
-      - DATABASE_URL=postgres://root:secret@postgres/bankproxy
-      - REDIS_URL=redis://redis:6379
-      - SECRET_KEY=AqBlimiStVp3_GAvpHDvj5yr
-      - BASE_URL=https://bankproxy.local.at
-      - ADMIN_AUTHORIZE_URL=https://tools.foodcoops.at/oauth2/auth?response_type=id_token&client_id=bankproxy&redirect_uri=https%3A%2F%2Fbankproxy.local.at%2Fadmin&scope=openid&state=bankproxystate&nonce=n0o1n2c3e4
-      - ADMIN_JWT_ALGORITHM=RS256
-      - ADMIN_JWT_SECRET=AdminJwtSecret 
-      - ADMIN_JWT_AUDIENCE=bankproxy
-      # - NODE_ENV=development
-    # volumes:
-    #   - './src:/usr/src/app/src'
+        PORT: 3000
+        DATABASE_URL: postgres://root:secret@postgres/bankproxy
+        REDIS_URL: redis://redis:6379
+        SECRET_KEY: AqBlimiStVp3_GAvpHDvj5yr
+        BASE_URL: https://bankproxy.local.at
+        ADMIN_AUTHORIZE_URL: https://tools.local.at/oauth2/auth?response_type=id_token&client_id=bankproxy&redirect_uri=https%3A%2F%2Fbankproxy.local.at%2Fadmin&scope=openid&state=bankproxystate&nonce=n0o1n2c3e4
+        ADMIN_JWT_ALGORITHM: RS256
+        ADMIN_JWT_SECRET: |
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqkeHlHLtCnfoni+Un+t4
+          pWHaPwrCj/0SPREvIsi+P+SQItQ/1qNyKdz6TntATo8UD3S7QUpWariEToCAVTAl
+          5EhBgFdS+4qU5CnqKn7/uBr2x9Y2aZka5gnlhdTNWXDVmspbT1s6tBaMz6XMTaQk
+          RwauO/+DtxedHTSYiaZRvy07aXOuDChIS4n+2HIqmwzW1YaRnHNCRdulsMdpUb1a
+          razqmM1KRY1JUbTzL1n63kViSJGAL6qESF2Gvo3HHHOZbM5WEk6Ag6zrvXFo80Cl
+          muf2Z+IoYFCYZ46zzcV81CWfdOrZT0kSDpIpD2Hd+tqlXUyQLz9olb0G/2gjEO8+
+          wQIDAQAB
+          -----END PUBLIC KEY-----
+        ADMIN_JWT_AUDIENCE: bankproxy
+        NODE_ENV: development
 
   postgres:
     image: postgres:14.1-alpine
@@ -56,8 +102,6 @@ services:
       - POSTGRES_DB=bankproxy
     volumes:
       - ./dev_data/postgres_data:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
 
   init-db:
     extends: mariadb
@@ -66,9 +110,19 @@ services:
       mariadb:
         condition: service_started
 
+  # init-discourse-db:
+  #   extends: postgres
+  #   restart: no
+  #   command: ["/bin/sh","/init-discourse-db.sh"]
+  #   volumes:
+  #     - ./dev_config/init_discourse_db.sh:/init-discourse-db.sh
+  #   depends_on:
+  #     postgres:
+  #       condition: service_completed_successfully
+
   init-foodsoft-db:
     <<: *common_foodsoft
-    command: bundle exec rake db:setup
+    command: sh -c "bundle exec rake db:setup || true"
     depends_on:
       init-db:
         condition: service_completed_successfully
