@@ -69,7 +69,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.http.routers.bankproxy.entrypoints: https
-      traefik.http.routers.bankproxy.rule: Host(`bankproxy.local.at`)
+      traefik.http.routers.bankproxy.rule: Host(`bankproxy.local.at`) || Host(`bankproxy.foodcoops.at`)
       traefik.http.routers.bankproxy.tls: "true"
       traefik.http.services.bankproxy.loadbalancer.server.port: 3000
     environment:
@@ -77,8 +77,8 @@ services:
         DATABASE_URL: postgres://root:secret@postgres/bankproxy
         REDIS_URL: redis://redis:6379
         SECRET_KEY: AqBlimiStVp3_GAvpHDvj5yr
-        BASE_URL: https://bankproxy.local.at
-        ADMIN_AUTHORIZE_URL: https://tools.local.at/oauth2/auth?response_type=id_token&client_id=bankproxy&redirect_uri=https%3A%2F%2Fbankproxy.local.at%2Fadmin&scope=openid&state=bankproxystate&nonce=n0o1n2c3e4
+        BASE_URL: https://bankproxy.foodcoops.at
+        ADMIN_AUTHORIZE_URL: https://tools.local.at/oauth2/auth?response_type=id_token&client_id=bankproxy&redirect_uri=https%3A%2F%2Fbankproxy.foodcoops.at%2Fadmin&scope=openid&state=bankproxystate&nonce=n0o1n2c3e4
         ADMIN_JWT_ALGORITHM: RS256
         ADMIN_JWT_SECRET: |
           -----BEGIN PUBLIC KEY-----
@@ -92,7 +92,12 @@ services:
           -----END PUBLIC KEY-----
         ADMIN_JWT_AUDIENCE: bankproxy
         NODE_ENV: development
-
+    volumes:
+      - ./src:/usr/src/app/src
+      - ./public:/usr/src/app/public
+    depends_on:
+      - redis
+      - postgres
   postgres:
     image: postgres:14.1-alpine
     restart: always
@@ -102,6 +107,8 @@ services:
       - POSTGRES_DB=bankproxy
     volumes:
       - ./dev_data/postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
 
   init-db:
     extends: mariadb

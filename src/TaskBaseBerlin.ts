@@ -219,12 +219,19 @@ export default abstract class extends TaskBaseOAuth {
   }
 
   async pisGET(path: string, query?: any) {
-    return this.#checkResponeStatus(this.get(this.pisBaseUrl + path, query));
+    return this.#checkResponeStatus(this.get(path, query));
   }
+
 
   async pisPOST(path: string, body?: any) {
     return this.#checkResponeStatus(
-      this.postJSON(this.pisBaseUrl + path, body)
+      this.postJSON(path, body)
+    );
+  }
+
+  async pisPUT(path: string, body?: any) {
+    return this.#checkResponeStatus(
+      this.putJSON(path, body)
     );
   }
 

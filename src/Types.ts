@@ -62,4 +62,5 @@ export interface SepaCreditTransferPayment {
   creditorAgentName?: string;
   creditorName: string;
   remittanceInformationUnstructured?: string;
+  requestedExecutionDate: string;
 }
