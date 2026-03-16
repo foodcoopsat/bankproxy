@@ -9,7 +9,7 @@ import TaskBaseBerlin from "../TaskBaseBerlin";
 const CONFIG_KEY_WALLET_ID = "WalletId";
 const CONFIG_KEY_WALLET_SECRET = "WalletSecret";
 const CONFIG_KEY_WEB_API_KEY = "WebApiKey";
-const ENV = 'sandbox'
+const ENV = process.env.ENV || 'production';
 
 interface AccountDetailsErsteConnect extends AccountDetails {
   info: {
@@ -157,7 +157,7 @@ export default class extends TaskBaseBerlin {
   }
 
   override get baseUrl() {
-    if (ENV == 'sandbox'){
+    if (ENV === 'sandbox'){
       return "https://webapi.developers.erstegroup.com/api/egb/sandbox";
     } else {
       return "https://webapi.developers.erstegroup.com/api/egb/production";
@@ -170,7 +170,7 @@ export default class extends TaskBaseBerlin {
     return "/v2/pisp";
   }
   get walletBaseUrl() {
-    if (ENV == 'sandbox'){
+    if (ENV === 'sandbox'){
       return "https://webapi.developers.erstegroup.com/api/egb/sandbox/v1/sandbox-idp";
     } else {
       return "https://idp.developers.erstegroup.com/developeridp/api";
