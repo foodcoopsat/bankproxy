@@ -9,9 +9,11 @@ import TaskBaseBerlin from "../TaskBaseBerlin";
 const CONFIG_KEY_WALLET_ID = "WalletId";
 const CONFIG_KEY_WALLET_SECRET = "WalletSecret";
 const CONFIG_KEY_WEB_API_KEY = "WebApiKey";
+const ENV = 'sandbox'
 
 interface AccountDetailsErsteConnect extends AccountDetails {
   info: {
+    resourceId: string;
     _ext: {
       tokenValid: boolean;
     };
@@ -82,11 +84,13 @@ export default class extends TaskBaseBerlin {
     accountDetails: AccountDetailsErsteConnect,
     _balances: any
   ): Promise<Transactions> {
-    if (!accountDetails.info?._ext?.tokenValid) {
-      throw new BadRequestError(
-        `Token invalid for account ${accountDetails.iban}`
-      );
-    }
+    console.log('transactionsForAccount with accountDetails:',accountDetails);
+    // return this.get(`/accounts/${accountDetails.info.resourceId}`);
+    // if (!accountDetails.info?._ext?.tokenValid) {
+    //   throw new BadRequestError(
+    //     `Token invalid for account ${accountDetails.iban}`
+    //   );
+    // }
     return super.transactionsForAccount(accountDetails, _balances);
   }
 
@@ -118,44 +122,61 @@ export default class extends TaskBaseBerlin {
       this.spinner(
         `Create payment for ${payment.creditorName} (${payment.instructedAmount.amount})`
       );
-      await this.pisPOST("/v1/payments/sepa-credit-transfers", payment);
+      await this.pisPOST("/v2/pisp/payments/sepa-credit-transfers", payment);
       paymentIds.push(this.json.paymentId);
+      if ((this.json._vop.status == 'MATCH') || true){
+        this.spinner("Confirm creditor...");
+        const headers = {
+          "TPP-Redirect-URI": this.callbackUri,
+        };
+        await this.withRequestHeaders(headers, () =>
+            this.pisPUT(`/v2/pisp/payments/sepa-credit-transfers/${this.json.paymentId}/creditor-confirmation`,{})
+        );
+        // await this.callback(this.json._links.scaRedirect.href, "Sign Payments");
+      } else {
+        this.spinner(`Creditor is not matching ${this.json._vop.status}`);
+        // await this.pisGET(`/v2/pisp/payments/sepa-credit-transfers/${this.json.paymentId}/status`);
+      }
     }
-
-    this.spinner("Creating signing basket...");
-    const headers = {
-      "TPP-Redirect-URI": this.callbackUri,
-      "TPP-Nok-Redirect-URI": this.callbackUri,
-    };
-    await this.withRequestHeaders(headers, () =>
-      this.pisPOST("/v1/signing-baskets", { paymentIds })
-    );
-    const statusHref = this.json._links.status.href;
-
-    await this.callback(this.json._links.scaRedirect.href, "Sign Payments");
-
-    this.spinner("Checking status of signing basket...");
-    await this.pisGET(statusHref);
-    const transactionStatus = this.json.transactionStatus;
-    if (!["ACSP", "ACTC", "ACWC"].includes(transactionStatus))
-      throw new InvalidStateError(
-        "signing basket transactionStatus",
-        transactionStatus
-      );
+    // const headers = {
+    //   "TPP-Redirect-URI": this.callbackUri,
+    //   "TPP-Nok-Redirect-URI": this.callbackUri,
+    // };
+    // await this.withRequestHeaders(headers, () =>
+    //   this.pisPOST("/pisp/v1/signing-baskets", { paymentIds })
+    // );
+    //
+    // this.spinner("Checking status of signing basket...");
+    // const transactionStatus = this.json.transactionStatus;
+    // if (!["ACSP", "ACTC", "ACWC"].includes(transactionStatus))
+    //   throw new InvalidStateError(
+    //     "signing basket transactionStatus",
+    //     transactionStatus
+    //   );
+    // await this.callback(this.json._links.scaRedirect.href, "Sign Payments");
   }
 
   override get baseUrl() {
-    return "https://webapi.developers.erstegroup.com/api/egb/production/v1";
+    if (ENV == 'sandbox'){
+      return "https://webapi.developers.erstegroup.com/api/egb/sandbox";
+    } else {
+      return "https://webapi.developers.erstegroup.com/api/egb/production";
+    }
   }
   override get aisBaseUrl() {
-    return "/aisp";
+    return "/v1/aisp";
   }
   override get pisBaseUrl() {
-    return "/pisp";
+    return "/v2/pisp";
   }
   get walletBaseUrl() {
-    return "https://idp.developers.erstegroup.com/developeridp/api";
+    if (ENV == 'sandbox'){
+      return "https://webapi.developers.erstegroup.com/api/egb/sandbox/v1/sandbox-idp";
+    } else {
+      return "https://idp.developers.erstegroup.com/developeridp/api";
+    }
   }
+
   override get piisBaseUrl() {
     return "/psd2-funds-confirmation-api";
   }
