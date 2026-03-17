@@ -84,13 +84,11 @@ export default class extends TaskBaseBerlin {
     accountDetails: AccountDetailsErsteConnect,
     _balances: any
   ): Promise<Transactions> {
-    console.log('transactionsForAccount with accountDetails:',accountDetails);
-    // return this.get(`/accounts/${accountDetails.info.resourceId}`);
-    // if (!accountDetails.info?._ext?.tokenValid) {
-    //   throw new BadRequestError(
-    //     `Token invalid for account ${accountDetails.iban}`
-    //   );
-    // }
+    if (!accountDetails.info?._ext?.tokenValid) {
+      throw new BadRequestError(
+        `Token invalid for account ${accountDetails.iban}`
+      );
+    }
     return super.transactionsForAccount(accountDetails, _balances);
   }
 
