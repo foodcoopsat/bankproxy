@@ -96,7 +96,7 @@ const app = server()
     res.json(await main.detroyConnection(user, req.body));
   })
   .use((err, req, res, _next) => {
-    console.error(`${new Date().toISOString()}: ${req.method} ${req.url}`);
+    console.error(`${new Date().toISOString()}: ${req.auth?.name} - ${req.method} ${req.url}`);
     console.error(err);
 
     if (err.statusCode)
