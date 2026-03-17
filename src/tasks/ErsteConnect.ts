@@ -66,7 +66,7 @@ export default class extends TaskBaseBerlin {
         ["CSAS", "Česká spořitelna a.s."],
         ["SLSP", "Slovenská sporiteľňa, a. s."],
       ].map(async ([idpCode, name]) => {
-        await this.postJSON("/wallet/v1/banks", { idpCode });
+        await this.postJSON("/v1/wallet/v1/banks", { idpCode });
         return [this.json.loginUrl, name];
       })
     );
