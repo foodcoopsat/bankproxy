@@ -62,7 +62,7 @@ export default class extends TaskBaseBerlin {
         ["EBOE", "Erste Bank and Sparkassen"],
         ["BCR", "Banca Comerciala Romana"],
         ["EBC", "Erste&Steiermärkische Bank d.d."],
-        ["EBH", "Erste Bank Hungary Zrt."],
+        // ["EBH", "Erste Bank Hungary Zrt."],
         ["CSAS", "Česká spořitelna a.s."],
         ["SLSP", "Slovenská sporiteľňa, a. s."],
       ].map(async ([idpCode, name]) => {
