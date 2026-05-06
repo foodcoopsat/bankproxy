@@ -47,7 +47,7 @@ const app = server()
   .post("/", async (req, res) => {
     if (isDevelopment) {
       const body = JSON.stringify(req.body);
-      console.log(`=== START TASK @ ${new Date().toISOString()} ===> ${body}`);
+      console.log(`=== START TASK @ ${new Date().toISOString()} from ${req.auth}`);
     }
 
     if (req.body.callbackUri)
