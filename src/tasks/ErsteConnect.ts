@@ -120,7 +120,7 @@ export default class extends TaskBaseBerlin {
       this.spinner(
         `Create payment for ${payment.creditorName} (${payment.instructedAmount.amount})`
       );
-      await this.pisPOST("/v2/pisp/payments/sepa-credit-transfers", payment);
+      await this.pisPOST("/v2/pisp/payments/instant-sepa-credit-transfers", payment);
       paymentIds.push(this.json.paymentId);
       if ((this.json._vop.status == 'MATCH') || true){
         this.spinner("Confirm creditor...");
@@ -128,7 +128,7 @@ export default class extends TaskBaseBerlin {
           "TPP-Redirect-URI": this.callbackUri,
         };
         await this.withRequestHeaders(headers, () =>
-            this.pisPUT(`/v2/pisp/payments/sepa-credit-transfers/${this.json.paymentId}/creditor-confirmation`,{})
+            this.pisPUT(`/v2/pisp/payments/instant-sepa-credit-transfers/${this.json.paymentId}/creditor-confirmation`,{})
         );
         // await this.callback(this.json._links.scaRedirect.href, "Sign Payments");
       } else {
