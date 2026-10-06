@@ -64,7 +64,8 @@ Please check out the [documentation](https://bankproxy.github.io) for more detai
 3. create certs: `mkcert -cert-file dev_data/certs/app.local.at.pem -key-file dev_data/certs/app.local.at-key.pem '*.local.at' '*.app.local.at'`
 4. create entries for app.local.at ... to point to 127.0.0.1 in your local `/etc/hosts`
 5. run `docker compose up -d`
-6. login at app.local.at with user admin and passwort secret
+6. after first init run `docker compose exec -it discourse bundle exec rake admin:create`
+7. login at app.local.at with user admin and passwort secret
 
 ## License
 
