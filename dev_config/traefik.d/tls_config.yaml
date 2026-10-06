@@ -4,12 +4,12 @@ tls:
       defaultCertificate:
         certFile: /etc/certs/_wildcard.local.at.pem
         keyFile: /etc/certs/_wildcard.local.at-key.pem
-  certificates:
-    - certFile: /etc/certs/traefik.local.at.pem
-      keyFile: /etc/certs/traefik.local.at-key.pem
-      stores:
-        - default
-    - certFile: /etc/certs/app.local.at.pem
-      keyFile: /etc/certs/app.local.at-key.pem
-      stores:
-        - default
+  # certificates:
+  #   - certFile: /etc/certs/traefik.local.at.pem
+  #     keyFile: /etc/certs/traefik.local.at-key.pem
+  #     stores:
+  #       - default
+  #   - certFile: /etc/certs/app.local.at.pem
+  #     keyFile: /etc/certs/app.local.at-key.pem
+  #     stores:
+  #       - default

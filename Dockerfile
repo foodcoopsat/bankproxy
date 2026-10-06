@@ -1,4 +1,4 @@
-FROM node:18-bullseye-slim
+FROM node:26-trixie-slim
 
 
 ENV NODE_ENV=production
@@ -14,7 +14,6 @@ USER node
 COPY --chown=node:node package.json package-lock.json ./
 RUN npm install
 
-COPY --chown=node:node foodsoft foodsoft
 COPY --chown=node:node index.ts index.ts
 COPY --chown=node:node LICENSE LICENSE
 COPY --chown=node:node Makefile Makefile
