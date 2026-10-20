@@ -1,0 +1,42 @@
+listenAddr: 0.0.0.0:3000
+log:
+  level: warn
+discourse:
+  server: https://forum.local.at
+  secret: tyI9SbwtD0qTPnyzCzxUCS_B
+oidc:
+  secret: 06891322fc28cea781619641c2c6b3a1
+  privateKey: |
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIEowIBAAKCAQEAqkeHlHLtCnfoni+Un+t4pWHaPwrCj/0SPREvIsi+P+SQItQ/
+    1qNyKdz6TntATo8UD3S7QUpWariEToCAVTAl5EhBgFdS+4qU5CnqKn7/uBr2x9Y2
+    aZka5gnlhdTNWXDVmspbT1s6tBaMz6XMTaQkRwauO/+DtxedHTSYiaZRvy07aXOu
+    DChIS4n+2HIqmwzW1YaRnHNCRdulsMdpUb1arazqmM1KRY1JUbTzL1n63kViSJGA
+    L6qESF2Gvo3HHHOZbM5WEk6Ag6zrvXFo80Clmuf2Z+IoYFCYZ46zzcV81CWfdOrZ
+    T0kSDpIpD2Hd+tqlXUyQLz9olb0G/2gjEO8+wQIDAQABAoIBAADm9faUB/40wMeo
+    J+lzsDQIPl2EPNgB7cUbR3+jsp06lI5cb3/XZgKnfa+VW9+xrqgK/s4ulOH6BySO
+    RgXLhm8e4FLX/Zn0zdd+UsvnsDKySQCJtahAOwcdFjdX+3g85KsWNXr8fEV3l06P
+    J9ehSA5cuFcD0mOZqFHXF0v/CLTAlCbY5PPQ0RR+bj/uyHP2OP1hP2Ikv7PRoHa8
+    2HuTGqr8q+jA4ftRFIasHiFzT1VpzGirDqyK0hpCKkjJDk40zL4z9gKnbJuRawrc
+    C8wf5f5plbSBxBiMEAUs/hpEDu5EjxZ5oEJTyrOhn8gLdoJJ2yZcKvzgGDTqbz42
+    TAO2NgECgYEA1+hYT5RcvUMidWulva0W37p2MGWL/TxCW0QzVCORaI2CxV0GCi7i
+    UAXU5NgAO4aLRfuCvbCh2KsGikdUEjuMcMnB79K/zUjsACyGrTR0gEt7bMNwNSU5
+    OPw8Ht0QDK6UPhT92NPs+9tfzzZwJIwmSkOSy/yQot4SM4Xi7WF38MECgYEAyeYl
+    V8sClHgCiacEeNJSkotybL7Fj8u83LggT0B4R7fYqcmH1Zql+ZsGKIhaSWnOuTj1
+    Nd9ItGc+ANJwsRRjFuULKMaL0rffN0aG+SJVCbjW51I9UmqzPacB+ER8wUTrmslM
+    l3Ui2+jueQKXfH4i+llvyNfQIVNAITRZq968zgECgYEAujOfNcJ12KO1bB7SaaqF
+    N53PoB1zhYoakCtZOQ8TsF+akCuRseaNNwZQfKvsR2nZYxltv7o9Wmbk1Qx+7Np+
+    XCckInhXAewJ3HyKCYZbkumGIF7MvojDuOmPz+5GkSlen8vqwLzEfNDM6B/Cx0I3
+    I4TzbQj8k/mBKP4mnyKYFgECgYBl6xrwvZdY0VgemsQkJa/vMBucD5V1aFi3Zu9Q
+    cnAFbCYgV46NYprkbMBoF6TUKGhlkf4eqs9t2iwviAvBKFR5Czhd5hRRU+aHZb/e
+    5djdpoQ9k4NHJnvC5JqW9COyAJOauIFEd6oYLvaq+Yb1HkuT6zAFyAPVvsvBt0aI
+    /1B6AQKBgEWD8oTvNSM2ZPqUs9VqiRXszeZ/jYWGMCJiXHkJCxA6DoiPyTgA/L9+
+    5ufW/jABFQmBxeMOS+wY1yVnVAAmnIcqcoGs+TxEq+uqpDQlVSdn9fEm/HmOwm9i
+    wrf/gtQpfTXnlwMUl2Ymjhf8RxwoMb5bNCTtJVff4hw0WMotgCGT
+    -----END RSA PRIVATE KEY-----
+clients:
+  bankproxy:
+    redirectURIs:
+      - https://bankproxy.local.at/admin
+      - https://bankproxy.foodcoops.at/admin
+
